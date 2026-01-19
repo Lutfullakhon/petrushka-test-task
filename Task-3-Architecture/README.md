@@ -4,34 +4,32 @@
 ```mermaid
 graph TB
     %% Мобильные приложения
-    App[Мобильные приложения] --> Reg
-    subgraph "Регистрация устройств"
-        Reg[Регистрация в сервисах] --> APNS[iOS: APNS]
-        Reg --> FCM_REG[Android: FCM]
-        APNS --> Token1[Получение device token]
-        FCM_REG --> Token2[Получение device token]
-    end
+    App["Мобильные приложения<br/>iOS + Android"] --> Reg["Регистрация устройств"]
     
-    Token1 --> DeviceService[Сервис управления устройствами]
-    Token2 --> DeviceService
+    Reg --> APNS["iOS: APNS<br/>device token"]
+    Reg --> FCM_REG["Android: FCM<br/>device token"]
     
-    %% Бизнес-сервисы
-    CartService[Сервис корзины] -->|Событие: cart_abandoned| EventBus[Событийная шина<br/>Kafka/RabbitMQ]
-    OrderService[Сервис заказов] -->|Событие: order_status_changed| EventBus
-    MarketingService[Сервис маркетинга] -->|Событие: promo_campaign| EventBus
+    APNS --> DeviceService["Сервис управления<br/>устройствами"]
+    FCM_REG --> DeviceService
+    
+    %% Бизнес-сервисы - источники событий
+    CartService["Сервис корзины"] -->|"Событие:<br/>cart_abandoned"| EventBus["Событийная шина<br/>Kafka / RabbitMQ"]
+    OrderService["Сервис заказов"] -->|"Событие:<br/>order_status"| EventBus
+    MarketingService["Сервис маркетинга"] -->|"Событие:<br/>promo_campaign"| EventBus
     
     %% Обработка событий
-    EventBus --> PushService[Сервис отправки PUSH-уведомлений]
-    PushService -->|Запрос токенов| DeviceService
-    DeviceService -->|Возврат device tokens| PushService
+    EventBus --> PushService["Сервис отправки<br/>PUSH-уведомлений"]
+    
+    PushService -->|"Запрос токенов<br/>user_id → device_tokens"| DeviceService
+    DeviceService -->|"Возврат токенов"| PushService
     
     %% Отправка через внешние сервисы
-    PushService -->|Для Android| FCM[FCM (Google)]
-    PushService -->|Для iOS| APNS_SEND[APNS (Apple)]
+    PushService -->|"Для Android"| FCM_Send["FCM - Google"]
+    PushService -->|"Для iOS"| APNS_Send["APNS - Apple"]
     
     %% Доставка на устройства
-    FCM --> AndroidDev[Android устройства]
-    APNS_SEND --> iOSDev[iOS устройства]
+    FCM_Send --> AndroidDev["Android<br/>устройства"]
+    APNS_Send --> iOSDev["iOS<br/>устройства"]
     
     %% Стили для наглядности
     style App fill:#e1f5fe,stroke:#01579b
@@ -41,13 +39,8 @@ graph TB
     style MarketingService fill:#e8f5e8,stroke:#1b5e20
     style EventBus fill:#fff3e0,stroke:#e65100
     style PushService fill:#ffebee,stroke:#b71c1c
-    style FCM fill:#e8eaf6,stroke:#283593
-    style APNS_SEND fill:#e8eaf6,stroke:#283593
-    
-    %% Легенда
-    subgraph "Легенда"
-        Direction1[Прямой поток] --> Direction2[Обратный запрос]
-    end
+    style FCM_Send fill:#e8eaf6,stroke:#283593
+    style APNS_Send fill:#e8eaf6,stroke:#283593
 ```
     
 ## Компоненты системы
