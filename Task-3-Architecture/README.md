@@ -3,19 +3,51 @@
 ## Архитектурная схема
 ```mermaid
 graph TB
-    A[Мобильные приложения] --> B[Регистрация: APNS/FCM]
-    B --> C[Управление устройствами]
+    %% Мобильные приложения
+    App[Мобильные приложения] --> Reg
+    subgraph "Регистрация устройств"
+        Reg[Регистрация в сервисах] --> APNS[iOS: APNS]
+        Reg --> FCM_REG[Android: FCM]
+        APNS --> Token1[Получение device token]
+        FCM_REG --> Token2[Получение device token]
+    end
     
-    D[Корзина] --> E[Событийная шина]
-    F[Заказы] --> E
-    G[Маркетинг] --> E
+    Token1 --> DeviceService[Сервис управления устройствами]
+    Token2 --> DeviceService
     
-    E --> H[Отправка PUSH]
-    H -->|Запрос| C
-    C -->|Токены| H
+    %% Бизнес-сервисы
+    CartService[Сервис корзины] -->|Событие: cart_abandoned| EventBus[Событийная шина<br/>Kafka/RabbitMQ]
+    OrderService[Сервис заказов] -->|Событие: order_status_changed| EventBus
+    MarketingService[Сервис маркетинга] -->|Событие: promo_campaign| EventBus
     
-    H --> I[FCM → Android]
-    H --> J[APNS → iOS]
+    %% Обработка событий
+    EventBus --> PushService[Сервис отправки PUSH-уведомлений]
+    PushService -->|Запрос токенов| DeviceService
+    DeviceService -->|Возврат device tokens| PushService
+    
+    %% Отправка через внешние сервисы
+    PushService -->|Для Android| FCM[FCM (Google)]
+    PushService -->|Для iOS| APNS_SEND[APNS (Apple)]
+    
+    %% Доставка на устройства
+    FCM --> AndroidDev[Android устройства]
+    APNS_SEND --> iOSDev[iOS устройства]
+    
+    %% Стили для наглядности
+    style App fill:#e1f5fe,stroke:#01579b
+    style DeviceService fill:#f3e5f5,stroke:#4a148c
+    style CartService fill:#e8f5e8,stroke:#1b5e20
+    style OrderService fill:#e8f5e8,stroke:#1b5e20
+    style MarketingService fill:#e8f5e8,stroke:#1b5e20
+    style EventBus fill:#fff3e0,stroke:#e65100
+    style PushService fill:#ffebee,stroke:#b71c1c
+    style FCM fill:#e8eaf6,stroke:#283593
+    style APNS_SEND fill:#e8eaf6,stroke:#283593
+    
+    %% Легенда
+    subgraph "Легенда"
+        Direction1[Прямой поток] --> Direction2[Обратный запрос]
+    end
 ```
     
 ## Компоненты системы
