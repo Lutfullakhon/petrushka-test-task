@@ -3,7 +3,6 @@
 ## Архитектурная схема
 ```mermaid
 graph TB
-    %% Мобильные приложения
     App[Мобильные приложения] --> Reg[Регистрация]
     Reg --> APNS[iOS: APNS]
     Reg --> FCM[Android: FCM]
@@ -11,24 +10,20 @@ graph TB
     APNS --> DeviceService[Сервис управления устройствами]
     FCM --> DeviceService
     
-    %% Бизнес-сервисы
     CartService[Сервис корзины] -->|cart_abandoned| EventBus[Событийная шина]
     OrderService[Сервис заказов] -->|order_events| EventBus
     MarketingService[Сервис маркетинга] -->|promo_events| EventBus
     
-    %% Обработка
     EventBus --> PushService[Сервис отправки PUSH]
     PushService -->|запрос токенов| DeviceService
     DeviceService -->|возврат токенов| PushService
     
-    %% Отправка
     PushService -->|Android| FCM_Send[FCM Google]
     PushService -->|iOS| APNS_Send[APNS Apple]
     
     FCM_Send --> AndroidDev[Android устройства]
     APNS_Send --> iOSDev[iOS устройства]
     
-    %% Минимальные цвета для группировки
     style CartService fill:#f0f9ff
     style OrderService fill:#f0f9ff
     style MarketingService fill:#f0f9ff
