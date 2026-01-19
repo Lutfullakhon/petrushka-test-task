@@ -23,12 +23,6 @@ graph TB
     
     FCM_Send --> AndroidDev[Android устройства]
     APNS_Send --> iOSDev[iOS устройства]
-    
-    style CartService fill:#f0f9ff
-    style OrderService fill:#f0f9ff
-    style MarketingService fill:#f0f9ff
-    style FCM_Send fill:#f5f3ff
-    style APNS_Send fill:#f5f3ff
 ```
     
 ## Компоненты системы
