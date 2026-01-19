@@ -3,44 +3,27 @@
 ## Архитектурная схема
 ```mermaid
 graph TB
-    %% Мобильные приложения
-    App["Мобильные приложения<br/>iOS + Android"] --> Reg["Регистрация устройств"]
+    App[Мобильные приложения] --> Reg[Регистрация]
+    Reg --> APNS_iOS[iOS: APNS]
+    Reg --> FCM_Android[Android: FCM]
     
-    Reg --> APNS["iOS: APNS<br/>device token"]
-    Reg --> FCM_REG["Android: FCM<br/>device token"]
+    APNS_iOS --> DeviceService[Сервис управления устройствами]
+    FCM_Android --> DeviceService
     
-    APNS --> DeviceService["Сервис управления<br/>устройствами"]
-    FCM_REG --> DeviceService
+    Cart[Сервис корзины] -->|события| EventBus[Событийная шина]
+    Orders[Сервис заказов] -->|события| EventBus
+    Marketing[Сервис маркетинга] -->|события| EventBus
     
-    %% Бизнес-сервисы - источники событий
-    CartService["Сервис корзины"] -->|"Событие:<br/>cart_abandoned"| EventBus["Событийная шина<br/>Kafka / RabbitMQ"]
-    OrderService["Сервис заказов"] -->|"Событие:<br/>order_status"| EventBus
-    MarketingService["Сервис маркетинга"] -->|"Событие:<br/>promo_campaign"| EventBus
+    EventBus --> PushService[Сервис отправки PUSH]
     
-    %% Обработка событий
-    EventBus --> PushService["Сервис отправки<br/>PUSH-уведомлений"]
+    PushService -->|запрос| DeviceService
+    DeviceService -->|токены| PushService
     
-    PushService -->|"Запрос токенов<br/>user_id → device_tokens"| DeviceService
-    DeviceService -->|"Возврат токенов"| PushService
+    PushService -->|Android| FCM_Send[FCM]
+    PushService -->|iOS| APNS_Send[APNS]
     
-    %% Отправка через внешние сервисы
-    PushService -->|"Для Android"| FCM_Send["FCM - Google"]
-    PushService -->|"Для iOS"| APNS_Send["APNS - Apple"]
-    
-    %% Доставка на устройства
-    FCM_Send --> AndroidDev["Android<br/>устройства"]
-    APNS_Send --> iOSDev["iOS<br/>устройства"]
-    
-    %% Стили для наглядности
-    style App fill:#e1f5fe,stroke:#01579b
-    style DeviceService fill:#f3e5f5,stroke:#4a148c
-    style CartService fill:#e8f5e8,stroke:#1b5e20
-    style OrderService fill:#e8f5e8,stroke:#1b5e20
-    style MarketingService fill:#e8f5e8,stroke:#1b5e20
-    style EventBus fill:#fff3e0,stroke:#e65100
-    style PushService fill:#ffebee,stroke:#b71c1c
-    style FCM_Send fill:#e8eaf6,stroke:#283593
-    style APNS_Send fill:#e8eaf6,stroke:#283593
+    FCM_Send --> Android[Android устройства]
+    APNS_Send --> iOS[iOS устройства]
 ```
     
 ## Компоненты системы
